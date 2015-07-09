@@ -4,3 +4,4 @@ __pycache__
 *.d64
 *.t64
 *.pyc
+*.prg

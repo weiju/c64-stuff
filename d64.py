@@ -76,8 +76,10 @@ def read_directory(data):
 
 def read_bam(data):
     bam_block = read_block(data, 18, 0)
+    disk_dos_version = bam_block[2]
+    bam_entries = bam_block[0x04:0x90]
     disk_name = rem_pad_bytes(bam_block[0x90:0xa0]).decode('utf-8')
-    print("DISK NAME '%s'" % disk_name)
+    print("DISK NAME '%s', DOS version: $%02x" % (disk_name, disk_dos_version))
 
 
 def parse_d64_file(path):
