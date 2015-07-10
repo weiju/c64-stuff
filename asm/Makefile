@@ -1,9 +1,14 @@
-ASM = vasm6502_oldstyle -Fbin -cbm-prg
+ASM = vasm6502_oldstyle -Fbin
 
-all: test.prg
+all: test.prg lisp.prg
 
 clean:
-	rm -f test.prg
+	rm -f *.prg
 
 test.prg: test.asm
-	$(ASM) $< -o $@
+	$(ASM) -cbm-prg $< -o $@
+
+
+lisp.prg: lisp.asm
+	$(ASM) -cbm-prg $< -o $@
+
