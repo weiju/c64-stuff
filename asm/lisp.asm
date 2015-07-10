@@ -1,12 +1,13 @@
         ;; Lisp runtime system, assume for now, we can freely allocate
-        ;; 1. never deallocate cons-cells
-        ;; cons-cells in the area from $C000-$CFFF
-        ;; $C000: 2 Bytes that hold the number of cons-cells
-        ;; $C002: 2 Bytes used to store return values for sub routines
+        
+        ;; 1. every value is 16 bit
+        ;; 2. never deallocate cons-cells
 
         ;; memory range for cons cells ($c000-$cfff)
+        ;; first 2 bytes hold number of cons cells
 CC_BASE=$c000
-CC_OFFSET=4
+CC_OFFSET=2
+CC_NIL=0
 
         ;; memory range for parameters ($8000-$8fff)
 RETVAL=$8000
@@ -15,9 +16,9 @@ ARG2=$8004
         
         org $1000
         JSR init
-        JSR alloc_cc
 
         ;; just as a test
+        JSR alloc_cc
         LDA RETVAL              ; get byte offset of cons cell
         STA ARG1                ; set car -> $CAFE
         LDA #$CA
@@ -26,9 +27,9 @@ ARG2=$8004
         STA ARG2+1
         JSR set_car
         
-        JSR alloc_cc
 
         ;; just as a test
+        JSR alloc_cc
         LDA RETVAL
         STA ARG1                ; set car -> $FACE
         LDA #$FA
@@ -39,27 +40,29 @@ ARG2=$8004
 
         BRK
 
-init    LDA #0                   ; initialize memory
-        STA CC_BASE              ; initially no cells
+        ;; initialize the Lisp runtime
+init    LDA #0                  ; initialize memory
+        STA CC_BASE             ; initially no cells
         STA CC_BASE+1
+        JSR alloc_cc            ; except slot 0 -> NIL
         RTS
         
         ;; allocate a cons-cell, the number of cells is in the 2 bytes at $C000
         ;; returns the index in RETVAL
 alloc_cc
         LDA CC_BASE             ; index of cons-cell in accu
-        STA RETVAL
-        INC CC_BASE             ; added another cons-cell
-
-        STA ARG1
-        LDA #$33
+        STA RETVAL              ; current number is return value
+        INC CC_BASE             ; increment number of cons cells
+        STA ARG1                ; set cdr -> 0
+        LDA #$00
         STA ARG2
-        LDA #$44
         STA ARG2+1
         JSR set_cdr
-        
         RTS
 
+        ;; cc[ARG1].cdr -> ARG2
+        ;; can be used as cons as well: ARG2 is index within cc table
+cons
 set_cdr LDA ARG1                ; cons cell index
         ASL
         ASL
@@ -72,6 +75,7 @@ set_cdr LDA ARG1                ; cons cell index
         RTS
 
 
+        ;; cc[ARG1].car -> ARG2
 set_car LDA ARG1                ; cons cell index
         ASL
         ASL
